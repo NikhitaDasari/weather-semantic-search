@@ -198,7 +198,7 @@ The Databricks App includes two user-facing views:
 │   ├── index.html
 │   └── weather_search.html
 └── notebooks/
-    └── ingest_weather_embeddings.ipynb
+    └── ingest_weather_embeddings.py
 ```
 
 ---
