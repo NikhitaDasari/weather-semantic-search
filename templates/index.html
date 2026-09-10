@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather Intelligence</title>
+  <style>
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:900px;margin:0 auto;padding:40px 24px;background:#f5f7fb;color:#1f2937}
+    .card{background:#fff;padding:32px;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+    input{width:100%;padding:10px 12px;margin:6px 0 14px;border:1px solid #d1d5db;border-radius:8px;box-sizing:border-box}
+    button{border:0;border-radius:8px;padding:12px 18px;cursor:pointer}.primary{background:#2563eb;color:#fff}.secondary{background:#e5e7eb}
+    nav{margin-bottom:24px}nav a{margin-right:16px;text-decoration:none;color:#2563eb;font-weight:600}.location{padding:20px;margin-bottom:20px;background:#f9fafb;border-radius:10px}pre{background:#f3f4f6;padding:16px;border-radius:8px;white-space:pre-wrap}
+  </style>
+</head>
+<body>
+<nav><a href="/">Sync Weather</a><a href="/search">Semantic Search</a></nav>
+<div class="card">
+  <h1>Weather Intelligence</h1>
+  <p>Sync National Weather Service forecasts and alerts into Databricks Lakebase.</p>
+  <div id="locations">
+    <div class="location">
+      <label>Location name</label><input class="name" value="Dallas, TX">
+      <label>Latitude</label><input class="lat" type="number" step="any" value="32.7767">
+      <label>Longitude</label><input class="lon" type="number" step="any" value="-96.7970">
+    </div>
+  </div>
+  <button class="secondary" onclick="addLocation()">Add Location</button>
+  <button class="primary" onclick="syncWeather()">Sync Weather</button>
+  <pre id="result"></pre>
+</div>
+<script>
+function addLocation(){document.getElementById('locations').insertAdjacentHTML('beforeend','<div class="location"><label>Location name</label><input class="name"><label>Latitude</label><input class="lat" type="number" step="any"><label>Longitude</label><input class="lon" type="number" step="any"></div>')}
+async function syncWeather(){
+  const locations=[...document.querySelectorAll('.location')].map(d=>({name:d.querySelector('.name').value.trim(),lat:parseFloat(d.querySelector('.lat').value),lon:parseFloat(d.querySelector('.lon').value)})).filter(x=>x.name&&!Number.isNaN(x.lat)&&!Number.isNaN(x.lon));
+  const out=document.getElementById('result');out.textContent='Syncing...';
+  try{
+    const r=await fetch('/weather/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({locations,limit:50})});const data=await r.json();
+    if(!r.ok){out.textContent=JSON.stringify(data,null,2);return}
+    const e=await fetch('/weather/generate-embeddings',{method:'POST'});const ed=await e.json();
+    out.textContent=JSON.stringify({...data,embeddings:ed},null,2)+'\n\nReady for semantic search.';
+  }catch(err){out.textContent='Request failed: '+err}
+}
+</script>
+</body>
+</html>
